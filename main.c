@@ -1,12 +1,14 @@
+/**
+*   1º Trabalho de Métodos Numéricos para Engenharia II
+*   Professor: Murilo F. Tomé
+*/
 
-// PVI:
-// y1' = y2
-// y2' = y1 + e^x
-// Y(0) = [1, 0]
+#include<math.h>
+#include<stdio.h>
 
-#include <math.h>
-#include <stdio.h>
+// FUNCÕES AUXILIARES
 
+// Multiplica cada elemento de um vetor por uma constante
 void vec_times(const double *v, double x, double *va, int size){
 	int i;
 	for(i = 0; i < size; i++){
@@ -14,12 +16,15 @@ void vec_times(const double *v, double x, double *va, int size){
 	}
 }
 
+// Soma dois vetores de mesmo tamanho
 void vec_add(const double *v1, const double *v2, double *va, int size){
 	int i;
 	for(i = 0; i < size; i++){
 		va[i] = v1[i] + v2[i];
 	}
 }
+
+// FIM DAS FUNÇÕES AUXILIARES
 
 // Executa o método de Euler Modificado com passo h
 // para um sistema size X size da forma
@@ -55,35 +60,48 @@ double euler_mod(double *y,
 	return x;
 }
 
-// a função F(Y, x) para o PVI
+// a função F(Y, x) para o PVI:
+// y1' = y2
+// y2' = y1 + e^x
+// Y(0) = [1, 0]
 void _f(const double *y, double x, double *fy) {
 	fy[0] = y[1];
 	fy[1] = y[0] + exp(x);
 }
 
+// Solução analítica para comparação
 double expected(double x){
 	return (exp(x) * (1 + 2*x) + 3*exp(-x))/4.0;
 }
 
+// Imprime uma linha de resultados
 void line(double x, double vc, double ve) {
-	printf("%20.15f\t%20.15f\t%20.15f\t%20g\n", x, vc, ve, fabs(ve - vc));
+	printf("%13.10f\t%13.10f\t%13.10f\t%13.5e\n", x, vc, ve, fabs(ve - vc));
 }
 
+
 int main() {
-	int i, j;
+	int i, j, iters;
 
-
-	for(j = 0; j < 10; j++){
+	for(j = 0; j < 4; j++){
 		double y[] = {1, 0};
 		double x = 0;
 		double h = 0.1/pow(2, j);
+		double ye;
 
+		printf("\n****\nh=%13f\n%13c\t%13c\t%13s\t%13c\n", h, 'x', 'y', "yc", 'e');
 
-		printf("h=%f\n%20c\t%20c\t%20s\t%20c\n", h, 'x', 'y', "yc", 'e');
+		ye = expected(x);
+		line(x, y[0], ye);
 
-		x = euler_mod(y, _f, x, h, (int) ceil(1.0/h), 2);
+		iters = (int) ceil(1.0/h);
 
-		line(x, y[0], expected(x));
+		for(i = 0; i < iters; i++){
+			x = euler_mod(y, _f, x, h, 1, 2);
+			ye = expected(x);
+
+			line(x, y[0], ye);
+		}
 	}
 
 	return 0;
