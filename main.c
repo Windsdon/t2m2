@@ -4,9 +4,11 @@
 // y2' = y1 + e^x
 // Y(0) = [1, 0]
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include<cmath>
+#include<cstdio>
+#include<vector>
+#include<iostream>
+#include<iomanip>
 
 void vec_times(const double *v, double x, double *va, int size){
 	int i;
@@ -70,37 +72,21 @@ void line(double x, double vc, double ve) {
 	printf("%13.10f\t%13.10f\t%13.10f\t%13.5e\n", x, vc, ve, fabs(ve - vc));
 }
 
-/*
-*  Cria um vetor com os valores para montar a tabela de erros
-*/
-void make_vals(double x, double ym, double ye, double *vec) {
-	vec = (double*) malloc(4 * sizeof(double));
-	vec[0] = x;
-	vec[1] = ym;
-	vec[2] = ye;
-	vec[3] = fabs(ye - ym);
-}
+using namespace std;
 
-typedef struct {
-	int count;
-	double h;
-	double **points;
-} erros;
 
 int main() {
 	int i, j, iters;
-	erros **todosErros;
 
-	todosErros = (erros*) malloc(4*sizeof(erros*));
-
+	std::vector<std::vector<std::vector<double> > > points;
 
 	for(j = 0; j < 4; j++){
 		double y[] = {1, 0};
 		double x = 0;
 		double h = 0.1/pow(2, j);
 		double ye;
-		erros *err = (erros*) malloc(sizeof(erros));
-		todosErros[j] = err;
+
+		vector<vector<double> > ps;
 
 		printf("\n****\nh=%13f\n%13c\t%13c\t%13s\t%13c\n", h, 'x', 'y', "yc", 'e');
 
@@ -108,42 +94,61 @@ int main() {
 		line(x, y[0], ye);
 
 		iters = (int) ceil(1.0/h);
-		err->count = iters + 1;
-		err->points = (double**) malloc((iters + 1) * sizeof(double*));
-		err->h = h;
-
-		make_vals(x, y[0], ye, err->points[0]);
 
 		for(i = 0; i < iters; i++){
 			x = euler_mod(y, _f, x, h, 1, 2);
 			ye = expected(x);
 
-			line(x, y[0], ye);			
-			make_vals(x, y[0], ye, err->points[i + 1]);
+			line(x, y[0], ye);
+
+			vector<double> p;
+			p.push_back(x);
+			p.push_back(y[0]);
+			p.push_back(ye);
+			p.push_back(fabs(y[0] - ye));
+			ps.push_back(p);
 		}
 
-		printf("erros: h=%g, count=%d, points=%p\n", err->h, err->count, err->points);
+		points.push_back(ps);
 	}
 
 	printf("\n\nh\tE\tn\n");
 	for(i = 0; i < 4; i++){
-		erros *err = todosErros[i];
-		double e, dif = 0, sum = 0;
+		vector<vector<double> > test = points[i];
+		double h = 0.1/pow(2, i);
 
-		printf("start sum");
+		double sum = 0, dif = 0;
 
-		for(j = 0; j < err->count; j++){
-			printf("%g", err->points[j][2]);
-			dif += pow(err->points[j][1] - err->points[j][2], 2);
-			sum += pow(err->points[j][2], 2);
-			printf("\n j = %d, dif = %g, sum = %g", j, dif, sum);
+		for(j = 0; j < test.size(); j++){
+			sum += pow(test[j][2], 2);
+			dif += pow(test[j][2] - test[j][1], 2);
 		}
-		printf("end sum");
 
-		e = sqrt(dif/sum);
+		double e = sqrt(dif/sum);
 
-		printf("%g %g %d\n", err->h, e, err->count - 1);
+		cout << h << "\t" << e << '\t' << (j) << endl;
+	}
 
+	cout << "h=0.1\th=0.05\th=0.025\th=0.0125" << endl;
+	cout << "x\ty\tx\ty\tx\ty\tx\ty" << endl;
+	cout << setprecision(13);
+	for(int k = 0; true; k++){
+		bool found = false;
+		for(int l = 3; l >= 0; l--){
+			if(points[l].size() > k) {
+				found = true;
+				if(l == 3) {
+					cout << points[l][k][0] << "\t" << points[l][k][2] << "\t";
+				}
+				cout << points[l][k][0] << "\t" << points[l][k][1] << "\t";
+			}
+		}
+
+		cout << endl;
+
+		if(!found) {
+			break;
+		}
 	}
 
 	return 0;
